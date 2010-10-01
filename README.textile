@@ -8,12 +8,11 @@ h2. Usage
 <pre>
 (use 'remvee.ring.middleware.basic-authentication)
 
-(defn restricted? [request] (not (= :get (:request-method request))))
 (defn authenticated? [name pass] (and (= name "foo") (= pass "bar")))
 
 (wrap! app
        ..
-       (:basic-authentication "restricted area" authenticated? restricted?))
+       (:basic-authentication authenticated?))
 </pre>
 
 
@@ -22,7 +21,7 @@ h2. Installation
 Drop the following dependency in your <code>project.clj</code> at the appropriate place:
 
 <pre>
-[ring-basic-authentication "0.0.0-SNAPSHOT"]
+[ring-basic-authentication "0.0.1-SNAPSHOT"]
 </pre>
 
 

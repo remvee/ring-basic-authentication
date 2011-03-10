@@ -10,9 +10,7 @@ h2. Usage
 
 (defn authenticated? [name pass] (and (= name "foo") (= pass "bar")))
 
-(wrap! app
-       ..
-       (:basic-authentication authenticated?))
+(def app (-> routes .. (wrap-basic-authentication authenticated?))
 </pre>
 
 
@@ -21,7 +19,7 @@ h2. Installation
 Drop the following dependency in your <code>project.clj</code> at the appropriate place:
 
 <pre>
-[ring-basic-authentication "0.0.1-SNAPSHOT"]
+[ring-basic-authentication "0.0.1"]
 </pre>
 
 

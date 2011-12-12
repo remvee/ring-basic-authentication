@@ -39,6 +39,13 @@
                      {:headers {"authorization"
                                 (str "Basic " (base64/encode-str "tester:secret"))}})))
 
+       ;; authorization success with username and password available
+       (let [handler (wrap-basic-authentication identity (constantly true))
+	     req {:headers {"authorization" (str "Basic " (base64/encode-str "tester:secret"))}}
+	     resp (handler req)]
+	 (is (= "tester" (get-in resp [:params :basic-auth-user])))
+	 (is (= "secret" (get-in resp [:params :basic-auth-pass]))))
+
        ;; authorization failure
        (let [f (wrap-basic-authentication (fn [_] :pass)
                                           #(and (= %1 "tester")
@@ -80,7 +87,9 @@
                        (last
                         (re-find #":(.*)$" cred)))]
          (if (authenticate name pass)
-           (app req)
+           (app (-> req
+		    (assoc-in [:params :basic-auth-user] name)
+		    (assoc-in [:params :basic-auth-pass] pass)))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
                           :body    "access denied"}
                          denied-response)

@@ -13,6 +13,8 @@ h2. Usage
 (def app (-> routes .. (wrap-basic-authentication authenticated?))
 </pre>
 
+Any subsequent ring handler will have access to the fields :basic-auth-user and :basic-auth-pass in the request.
+
 
 h2. Installation
 

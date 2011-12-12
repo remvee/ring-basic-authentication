@@ -43,8 +43,8 @@
        (let [handler (wrap-basic-authentication identity (constantly true))
 	     req {:headers {"authorization" (str "Basic " (base64/encode-str "tester:secret"))}}
 	     resp (handler req)]
-	 (is (= "tester" (:basic-auth-user resp)))
-	 (is (= "secret" (:basic-auth-pass resp))))
+	 (is (= "tester" (get-in resp [:params :basic-auth-user])))
+	 (is (= "secret" (get-in resp [:params :basic-auth-pass]))))
 
        ;; authorization failure
        (let [f (wrap-basic-authentication (fn [_] :pass)
@@ -87,7 +87,9 @@
                        (last
                         (re-find #":(.*)$" cred)))]
          (if (authenticate name pass)
-           (app (assoc req :basic-auth-user name :basic-auth-pass pass))
+           (app (-> req
+		    (assoc-in [:params :basic-auth-user] name)
+		    (assoc-in [:params :basic-auth-pass] pass)))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
                           :body    "access denied"}
                          denied-response)

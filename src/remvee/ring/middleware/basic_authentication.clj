@@ -16,9 +16,10 @@
   "Wrap response with a basic authentication challenge as described in
   RFC2617 section 2.
 
-  The authenticate function is called with two parameters, the
-  username and password, and should return a value when the login is
-  valid.
+  The authenticate function is called with two parameters, the userid
+  and password, and should return a value when the login is valid.  This
+  value is added to the request structure with the :basic-authentication
+  key.
 
   The realm is a descriptive string visible to the visitor.  It,
   together with the canonical root URL, defines the protected resource
@@ -38,6 +39,15 @@
                                                       (= %2 "secret")))
                      {:headers {"authorization"
                                 (str "Basic " (base64/encode-str "tester:secret"))}})))
+       
+       ;; authorization success adds basic-authentication on request map
+       (is (= "token" (:basic-authentication
+                       ((wrap-basic-authentication (fn [req] req)
+                                                   #(and (= %1 "tester")
+                                                         (= %2 "secret")
+                                                         "token"))
+                        {:headers {"authorization"
+                                   (str "Basic " (base64/encode-str "tester:secret"))}}))))
 
        ;; authorization failure
        (let [f (wrap-basic-authentication (fn [_] :pass)
@@ -73,14 +83,14 @@
                        (base64/decode-str
                         (last
                          (re-find #"^Basic (.*)$" auth))))
-             name (and cred
+             user (and cred
                        (last
                         (re-find #"^(.*):" cred)))
              pass (and cred
                        (last
                         (re-find #":(.*)$" cred)))]
-         (if (authenticate name pass)
-           (app req)
+         (if-let [token (authenticate user pass)]
+           (app (assoc req :basic-authentication token))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
                           :body    "access denied"}
                          denied-response)

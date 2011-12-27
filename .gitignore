@@ -1,5 +1,6 @@
-pom.xml
-*jar
-lib
-classes
-autodoc
+/pom.xml
+/ring-basic-authentication-*.jar
+/lib
+/classes
+/autodoc
+/.lein-deps-sum

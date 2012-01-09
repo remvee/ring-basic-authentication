@@ -1,9 +1,8 @@
-(defproject ring-basic-authentication "0.0.3-SNAPSHOT"
+(defproject ring-basic-authentication "0.0.3"
   :description "Ring middleware for basic authentication."
   
-  :dependencies [[org.clojure/clojure "1.2.0"]
-                 [org.clojure/clojure-contrib "1.2.0"]
-                 [clj-base64 "0.0.1"]]
+  :dependencies [[org.clojure/clojure "1.3.0"]
+                 [clj-base64 "0.0.2"]]
   
   :autodoc {:description "Ring middleware to enforce basic authentication as described in RFC2617 section 2."
             :copyright "Copyright (c) Remco van 't Veer."

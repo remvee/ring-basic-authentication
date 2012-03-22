@@ -9,8 +9,14 @@
 (ns remvee.ring.middleware.basic-authentication
   "HTTP basis authentication middleware for ring."
   {:author "Remco van 't Veer"}
-  (:use clojure.test
-        [remvee.base64 :as base64]))
+  (:use clojure.test)
+  (:require [clojure.data.codec.base64 :as base64]))
+
+(defn encode [^String string]
+  (reduce str (map char (base64/encode (.getBytes string)))))
+
+(defn decode [^String string]
+  (reduce str (map char (base64/decode (.getBytes string)))))
 
 (defn wrap-basic-authentication
   "Wrap response with a basic authentication challenge as described in
@@ -38,7 +44,7 @@
                                                 #(and (= %1 "tester")
                                                       (= %2 "secret")))
                      {:headers {"authorization"
-                                (str "Basic " (base64/encode-str "tester:secret"))}})))
+                                (str "Basic " (encode "tester:secret"))}})))
        
        ;; authorization success adds basic-authentication on request map
        (is (= "token" (:basic-authentication
@@ -47,7 +53,7 @@
                                                          (= %2 "secret")
                                                          "token"))
                         {:headers {"authorization"
-                                   (str "Basic " (base64/encode-str "tester:secret"))}}))))
+                                   (str "Basic " (encode "tester:secret"))}}))))
 
        ;; authorization failure
        (let [f (wrap-basic-authentication (fn [_] :pass)
@@ -80,7 +86,7 @@
      (fn [req]
        (let [auth ((:headers req) "authorization")
              cred (and auth
-                       (base64/decode-str
+                       (decode
                         (last
                          (re-find #"^Basic (.*)$" auth))))
              user (and cred

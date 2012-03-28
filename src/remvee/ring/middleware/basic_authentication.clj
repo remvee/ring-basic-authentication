@@ -12,11 +12,20 @@
   (:use clojure.test)
   (:require [clojure.data.codec.base64 :as base64]))
 
-(defn encode [^String string]
-  (reduce str (map char (base64/encode (.getBytes string)))))
+(defn- byte-transform
+  "Used to encode and decode strings."
+  [direction-fn string]
+  (reduce str (map char (direction-fn (.getBytes string)))))
 
-(defn decode [^String string]
-  (reduce str (map char (base64/decode (.getBytes string)))))
+(defn encode
+  "Will do a base64 encoding of a string and return a string."
+  [^String string]
+  (byte-transform base64/encode string))
+
+(defn decode
+  "Will do a base64 decoding of a string and return a string."
+  [^String string]
+  (byte-transform base64/decode string))
 
 (defn wrap-basic-authentication
   "Wrap response with a basic authentication challenge as described in

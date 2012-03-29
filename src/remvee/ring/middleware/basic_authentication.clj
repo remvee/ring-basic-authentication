@@ -17,12 +17,12 @@
   [direction-fn string]
   (reduce str (map char (direction-fn (.getBytes string)))))
 
-(defn encode
+(defn- encode-base64
   "Will do a base64 encoding of a string and return a string."
   [^String string]
   (byte-transform base64/encode string))
 
-(defn decode
+(defn- decode-base64
   "Will do a base64 decoding of a string and return a string."
   [^String string]
   (byte-transform base64/decode string))
@@ -53,7 +53,7 @@
                                                 #(and (= %1 "tester")
                                                       (= %2 "secret")))
                      {:headers {"authorization"
-                                (str "Basic " (encode "tester:secret"))}})))
+                                (str "Basic " (encode-base64 "tester:secret"))}})))
        
        ;; authorization success adds basic-authentication on request map
        (is (= "token" (:basic-authentication
@@ -62,7 +62,7 @@
                                                          (= %2 "secret")
                                                          "token"))
                         {:headers {"authorization"
-                                   (str "Basic " (encode "tester:secret"))}}))))
+                                   (str "Basic " (encode-base64 "tester:secret"))}}))))
 
        ;; authorization failure
        (let [f (wrap-basic-authentication (fn [_] :pass)
@@ -95,7 +95,7 @@
      (fn [req]
        (let [auth ((:headers req) "authorization")
              cred (and auth
-                       (decode
+                       (decode-base64
                         (last
                          (re-find #"^Basic (.*)$" auth))))
              user (and cred

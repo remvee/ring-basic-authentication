@@ -4,3 +4,4 @@
 /classes
 /autodoc
 /.lein-deps-sum
+/.lein-failures

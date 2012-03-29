@@ -1,4 +1,4 @@
-(defproject ring-basic-authentication "0.0.3"
+(defproject ring-basic-authentication "0.0.4"
   :description "Ring middleware for basic authentication."
   
   :dependencies [[org.clojure/clojure "1.3.0"]

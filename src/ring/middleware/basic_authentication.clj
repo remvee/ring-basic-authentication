@@ -6,7 +6,7 @@
 ;; terms of this license.  You must not remove this notice, or any other, from
 ;; this software.
 
-(ns remvee.ring.middleware.basic-authentication
+(ns ring.middleware.basic-authentication
   "HTTP basis authentication middleware for ring."
   {:author "Remco van 't Veer"}
   (:use clojure.test)

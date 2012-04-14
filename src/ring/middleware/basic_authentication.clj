@@ -10,12 +10,16 @@
   "HTTP basis authentication middleware for ring."
   {:author "Remco van 't Veer"}
   (:use clojure.test)
-  (:require [clojure.data.codec.base64 :as base64]))
+  (:require [clojure.string :as s]
+            [clojure.data.codec.base64 :as base64]))
 
 (defn- byte-transform
-  "Used to encode and decode strings."
+  "Used to encode and decode strings.  Returns nil when an exception
+  was raised."
   [direction-fn string]
-  (reduce str (map char (direction-fn (.getBytes string)))))
+  (try
+    (reduce str (map char (direction-fn (.getBytes string))))
+    (catch Exception _)))
 
 (defn- encode-base64
   "Will do a base64 encoding of a string and return a string."
@@ -44,39 +48,47 @@
   returned when authorization fails.  The appropriate status and
   authentication headers will be merged into it.  It defaults to plain
   text 'access denied' response."
-  
+
   {:test
    (fn []
      (do
-       ;; authorization success
-       (is (= :pass ((wrap-basic-authentication (fn [_] :pass)
-                                                #(and (= %1 "tester")
-                                                      (= %2 "secret")))
-                     {:headers {"authorization"
-                                (str "Basic " (encode-base64 "tester:secret"))}})))
-       
-       ;; authorization success adds basic-authentication on request map
-       (is (= "token" (:basic-authentication
-                       ((wrap-basic-authentication (fn [req] req)
-                                                   #(and (= %1 "tester")
-                                                         (= %2 "secret")
-                                                         "token"))
-                        {:headers {"authorization"
-                                   (str "Basic " (encode-base64 "tester:secret"))}}))))
+       (let [r ((wrap-basic-authentication identity
+                                           #(and (= %1 "tester")
+                                                 (= %2 "secret")
+                                                 "token"))
+                {:headers {"authorization"
+                           (str "Basic " (encode-base64 "tester:secret"))}})]
+         ;; authorization success
+         (is r)
 
-       ;; authorization failure
-       (let [f (wrap-basic-authentication (fn [_] :pass)
-                                          #(and (= %1 "tester")
-                                                (= %2 "secret")))
+         ;; authorization success adds basic-authentication on request map
+         (is (= "token" (:basic-authentication r))))
+
+       ;; authorization success when expecting empty user and password
+       (is (= :pass
+              ((wrap-basic-authentication (fn [_] :pass) #(and (= %1 "")
+                                                               (= %2 "")))
+               {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})))
+
+       ;; authorization failure with bad credentials
+       (let [f (wrap-basic-authentication identity (fn [_ _]))
              r (f {:headers {}})]
          (is (= 401 (:status r)))
          (is (= "access denied" (:body r)))
          (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate"))))
 
+       ;; authorization failure with unacceptable
+       (let [r ((wrap-basic-authentication identity (fn [_ _]))
+                {:headers {"authorization" "Basic this is unacceptable!"}})]
+         (is (= 401 (:status r))))
+
+       ;; authorization failure with empty credentials
+       (let [r ((wrap-basic-authentication identity (fn [_ _]))
+                {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
+         (is (= 401 (:status r))))
+
        ;; fancy authorization failure
-       (let [f (wrap-basic-authentication (fn [_] :pass)
-                                          #(and (= %1 "tester")
-                                                (= %2 "secret"))
+       (let [f (wrap-basic-authentication identity (fn [_ _])
                                           "test realm"
                                           {:headers {"Content-Type" "test/mime"}
                                            :body "test area not accessable"})]
@@ -94,23 +106,14 @@
   ([app authenticate realm denied-response]
      (fn [req]
        (let [auth ((:headers req) "authorization")
-             cred (and auth
-                       (decode-base64
-                        (last
-                         (re-find #"^Basic (.*)$" auth))))
-             user (and cred
-                       (last
-                        (re-find #"^(.*):" cred)))
-             pass (and cred
-                       (last
-                        (re-find #":(.*)$" cred)))]
-         (if-let [token (authenticate user pass)]
+             cred (and auth (decode-base64 (last (re-find #"^Basic (.*)$" auth))))
+             [user pass] (and cred (s/split (str cred) #":"))]
+         (if-let [token (and cred (authenticate (str user) (str pass)))]
            (app (assoc req :basic-authentication token))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
-                          :body    "access denied"}
+                          :body "access denied"}
                          denied-response)
              :status  401
              :headers (merge (:headers denied-response)
                              {"WWW-Authenticate" (format "Basic realm=\"%s\""
                                                          (or realm "restricted area"))})))))))
-

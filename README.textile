@@ -19,7 +19,7 @@ h2. Installation
 Drop the following dependency in your <code>project.clj</code> at the appropriate place:
 
 <pre>
-[ring-basic-authentication "0.0.1"]
+[ring-basic-authentication "1.0.1"]
 </pre>
 
 

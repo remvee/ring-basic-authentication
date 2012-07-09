@@ -6,7 +6,7 @@ Ring middleware to enforce basic authentication as described in RFC2617 section 
 h2. Usage
 
 <pre>
-(use 'remvee.ring.middleware.basic-authentication)
+(use 'ring.middleware.basic-authentication)
 
 (defn authenticated? [name pass] (and (= name "foo") (= pass "bar")))
 
@@ -19,7 +19,7 @@ h2. Installation
 Drop the following dependency in your <code>project.clj</code> at the appropriate place:
 
 <pre>
-[ring-basic-authentication "0.0.1"]
+[ring-basic-authentication "1.0.1"]
 </pre>
 
 

@@ -1,0 +1,15 @@
+h2. 1.0.4 (2012-09-27)
+
+* Updated Clojure dependency to 1.4
+
+h2. 1.0.1 (2012-04-14)
+
+* Properly handle empty user password input
+
+h2. 1.0.0 (2012-04-02)
+
+* Changed namespace to ring.middleware.basic-authentecation
+
+h2. 0.0.4
+
+* Using base64 functions from clojure.data.codec 1.0.1

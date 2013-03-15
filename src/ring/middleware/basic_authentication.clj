@@ -7,7 +7,7 @@
 ;; this software.
 
 (ns ring.middleware.basic-authentication
-  "HTTP basis authentication middleware for ring."
+  "HTTP basic authentication middleware for ring."
   {:author "Remco van 't Veer"}
   (:use clojure.test)
   (:require [clojure.string :as s]

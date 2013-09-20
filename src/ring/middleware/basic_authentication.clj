@@ -87,6 +87,11 @@
                 {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
          (is (= 401 (:status r))))
 
+       ;; overwrite default status code
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})]
+         (let [r (f {:headers {}})]
+           (is (= 999 (:status r)))))
+
        ;; fancy authorization failure
        (let [f (wrap-basic-authentication identity (fn [_ _])
                                           "test realm"

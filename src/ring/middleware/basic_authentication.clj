@@ -92,6 +92,11 @@
          (let [r (f {:headers {}})]
            (is (= 999 (:status r)))))
 
+       ;; overwrite default header
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})]
+         (let [r (f {:headers {}})]
+           (is (= nil (get-in r [:headers "WWW-Authenticate"])))))
+
        ;; fancy authorization failure
        (let [f (wrap-basic-authentication identity (fn [_ _])
                                           "test realm"

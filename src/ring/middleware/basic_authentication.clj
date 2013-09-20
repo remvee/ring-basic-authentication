@@ -121,9 +121,9 @@
          (if-let [token (and cred (authenticate (str user) (str pass)))]
            (app (assoc req :basic-authentication token))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
+                          :status  401
                           :body "access denied"}
                          denied-response)
-             :status  401
-             :headers (merge (:headers denied-response)
-                             {"WWW-Authenticate" (format "Basic realm=\"%s\""
-                                                         (or realm "restricted area"))})))))))
+             :headers (merge {"WWW-Authenticate" (format "Basic realm=\"%s\""
+                                                         (or realm "restricted area"))}
+                             (:headers denied-response))))))))

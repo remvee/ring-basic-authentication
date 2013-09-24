@@ -87,6 +87,16 @@
                 {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
          (is (= 401 (:status r))))
 
+       ;; overwrite default status code
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})]
+         (let [r (f {:headers {}})]
+           (is (= 999 (:status r)))))
+
+       ;; overwrite default header
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})]
+         (let [r (f {:headers {}})]
+           (is (= nil (get-in r [:headers "WWW-Authenticate"])))))
+
        ;; fancy authorization failure
        (let [f (wrap-basic-authentication identity (fn [_ _])
                                           "test realm"
@@ -111,9 +121,9 @@
          (if-let [token (and cred (authenticate (str user) (str pass)))]
            (app (assoc req :basic-authentication token))
            (assoc (merge {:headers {"Content-Type" "text/plain"}
+                          :status  401
                           :body "access denied"}
                          denied-response)
-             :status  401
-             :headers (merge (:headers denied-response)
-                             {"WWW-Authenticate" (format "Basic realm=\"%s\""
-                                                         (or realm "restricted area"))})))))))
+             :headers (merge {"WWW-Authenticate" (format "Basic realm=\"%s\""
+                                                         (or realm "restricted area"))}
+                             (:headers denied-response))))))))

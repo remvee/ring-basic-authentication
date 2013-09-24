@@ -1,3 +1,7 @@
+* 1.0.3 (2013-09-24)
+
+  - Allow denied-response to overwrite all denied-response defaults
+
 * 1.0.2 (2013-03-15)
 
   - Updated Clojure dependency to 1.4.

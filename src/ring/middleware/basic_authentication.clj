@@ -64,6 +64,19 @@
          ;; authorization success adds basic-authentication on request map
          (is (= "token" (:basic-authentication r))))
 
+       ;; authorization should succeed when password contains a colon
+       (let [r ((wrap-basic-authentication identity
+                                           #(and (= %1 "tester")
+                                                 (= %2 "the:secret")
+                                                 "token"))
+                {:headers {"authorization"
+                           (str "Basic " (encode-base64 "tester:the:secret"))}})]
+         ;; authorization success
+         (is r)
+
+         ;; authorization success adds basic-authentication on request map
+         (is (= "token" (:basic-authentication r))))
+
        ;; authorization success when expecting empty user and password
        (is (= :pass
               ((wrap-basic-authentication (fn [_] :pass) #(and (= %1 "")
@@ -117,7 +130,7 @@
      (fn [req]
        (let [auth ((:headers req) "authorization")
              cred (and auth (decode-base64 (last (re-find #"^Basic (.*)$" auth))))
-             [user pass] (and cred (s/split (str cred) #":"))]
+             [user pass] (and cred (s/split (str cred) #":" 2))]
          (if-let [token (and cred (authenticate (str user) (str pass)))]
            (app (assoc req :basic-authentication token))
            (assoc (merge {:headers {"Content-Type" "text/plain"}

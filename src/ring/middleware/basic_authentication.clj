@@ -31,6 +31,34 @@
   [^String string]
   (byte-transform base64/decode string))
 
+(defn basic-authentication-request
+  "Authenticates the given request against using auth-fn. The value
+  returned by auth-fn is assoc'd onto the request as
+  :basic-authentication.  Thus, a truthy value of
+  :basic-authentication on the returned request indicates successful
+  authentication, and a false or nil value indicates authentication
+  failure."
+  [request auth-fn]
+  (let [auth ((:headers request) "authorization")
+        cred (and auth (decode-base64 (last (re-find #"^Basic (.*)$" auth))))
+        [user pass] (and cred (s/split (str cred) #":" 2))]
+    (assoc request :basic-authentication (and cred (auth-fn (str user) (str pass))))))
+
+(defn authentication-failure
+  "Returns an authentication failure response, which defaults to a
+  plain text \"access denied\" response.  :status and :body can be
+  overriden via keys in denied-response, and :headers from
+  denied-response are merged into those of the default response.
+  realm defaults to \"restricted area\" if not given."
+  [& [realm denied-response]]
+  (assoc (merge {:status 401
+                 :body   "access denied"}
+                denied-response)
+    :headers (merge {"WWW-Authenticate" (format "Basic realm=\"%s\""
+                                                (or realm "restricted area"))
+                     "Content-Type"     "text/plain"}
+                    (:headers denied-response))))
+
 (defn wrap-basic-authentication
   "Wrap response with a basic authentication challenge as described in
   RFC2617 section 2.
@@ -122,21 +150,9 @@
            (is (get (:headers r) "WWW-Authenticate"))
            (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))))))}
 
-  ([app authenticate]
-     (wrap-basic-authentication app authenticate nil nil))
-  ([app authenticate realm]
-     (wrap-basic-authentication app authenticate realm nil))
-  ([app authenticate realm denied-response]
-     (fn [req]
-       (let [auth ((:headers req) "authorization")
-             cred (and auth (decode-base64 (last (re-find #"^Basic (.*)$" auth))))
-             [user pass] (and cred (s/split (str cred) #":" 2))]
-         (if-let [token (and cred (authenticate (str user) (str pass)))]
-           (app (assoc req :basic-authentication token))
-           (assoc (merge {:headers {"Content-Type" "text/plain"}
-                          :status  401
-                          :body "access denied"}
-                         denied-response)
-             :headers (merge {"WWW-Authenticate" (format "Basic realm=\"%s\""
-                                                         (or realm "restricted area"))}
-                             (:headers denied-response))))))))
+  [app authenticate & [realm denied-response]]
+  (fn [req]
+    (let [auth-req (basic-authentication-request req authenticate)]
+      (if (:basic-authentication auth-req)
+        (app auth-req)
+        (authentication-failure realm denied-response)))))

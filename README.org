@@ -23,7 +23,7 @@
    appropriate place:
 
    #+BEGIN_SRC clojure
-   [ring-basic-authentication "1.0.2"]
+   [ring-basic-authentication "1.0.5"]
    #+END_SRC
 
 

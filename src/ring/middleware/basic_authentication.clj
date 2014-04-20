@@ -31,6 +31,16 @@
   [^String string]
   (byte-transform base64/decode string))
 
+(defn- credential
+  "If the authorization header is providen return a the username and the password.
+   Otherwise returns a couple of nil."
+  [auth]
+  (if auth
+    (when-let [user:pass (decode-base64 (last (re-find #"^Basic (.*)$" auth)))]
+      (let [[user pass] (s/split (str user:pass) #":" 2)]
+        [user pass]))
+    [nil nil]))
+
 (defn basic-authentication-request
   "Authenticates the given request against using auth-fn. The value
   returned by auth-fn is assoc'd onto the request as
@@ -40,9 +50,8 @@
   failure."
   [request auth-fn]
   (let [auth ((:headers request) "authorization")
-        cred (and auth (decode-base64 (last (re-find #"^Basic (.*)$" auth))))
-        [user pass] (and cred (s/split (str cred) #":" 2))]
-    (assoc request :basic-authentication (and cred (auth-fn (str user) (str pass))))))
+        [user pass] (credential auth)]
+    (assoc request :basic-authentication (auth-fn (str user) (str pass)))))
 
 (defn authentication-failure
   "Returns an authentication failure response, which defaults to a
@@ -58,6 +67,46 @@
                                                 (or realm "restricted area"))
                      "Content-Type"     "text/plain"}
                     (:headers denied-response))))
+
+(defn wrap-basic-authentication-params
+  "Wrap the request exposing in clear the username and the password"
+  {:test
+   (fn []
+     (do
+       ;; Header and valid string
+       (let [r ((wrap-basic-authentication-params)
+                {:headers {"authorization"
+                           (str "Basic " (encode-base64 "tester:secret"))}})]
+         (is r)
+         (is (= "tester" (:basic-auth-username r)))
+         (is (= "secret" (:basic-auth-password r))))
+       ;; Header without string
+       (let [r ((wrap-basic-authentication-params)
+                {:headers {"authorization"
+                           (str "Basic ")}})]
+         (is r)
+         (is (= nil (:basic-auth-username r)))
+         (is (= nil (:basic-auth-password r))))
+       ;; Header with colon inside password
+       (let [r ((wrap-basic-authentication-params)
+                {:headers {"authorization"
+                           (str "Basic " (encode-base64 "tester:sec::ret"))}})]
+         (is r)
+         (is (= "tester" (:basic-auth-username r)))
+         (is (= "sec::ret" (:basic-auth-password r))))
+       ;; No Header
+       (let [r ((wrap-basic-authentication-params)
+                {:headers {"no-auth" "foo"}})]
+         (is r)
+         (is (= nil (:basic-auth-username r)))
+         (is (= nil (:basic-auth-password r))))))}
+  []
+  (fn [req]
+    (let [auth ((:headers req) "authorization")
+          [user pass] (credential auth)]
+      (assoc req
+        :basic-auth-username user
+        :basic-auth-password pass))))
 
 (defn wrap-basic-authentication
   "Wrap response with a basic authentication challenge as described in

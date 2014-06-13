@@ -6,7 +6,7 @@
 ** Usage
 
    #+BEGIN_SRC clojure
-   (use 'ring.middleware.basic-authentication)
+   (require '[ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
 
    (defn authenticated? [name pass]
      (and (= name "foo")

@@ -129,26 +129,26 @@
          (is (= 401 (:status r))))
 
        ;; overwrite default status code
-       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})]
-         (let [r (f {:headers {}})]
-           (is (= 999 (:status r)))))
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})
+             r (f {:headers {}})]
+         (is (= 999 (:status r))))
 
        ;; overwrite default header
-       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})]
-         (let [r (f {:headers {}})]
-           (is (= nil (get-in r [:headers "WWW-Authenticate"])))))
+       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})
+             r (f {:headers {}})]
+         (is (= nil (get-in r [:headers "WWW-Authenticate"]))))
 
        ;; fancy authorization failure
        (let [f (wrap-basic-authentication identity (fn [_ _])
                                           "test realm"
                                           {:headers {"Content-Type" "test/mime"}
-                                           :body "test area not accessable"})]
-         (let [r (f {:headers {}})]
-           (is (= 401 (:status r)))
-           (is (= "test area not accessable" (:body r)))
-           (is (= "test/mime" (get (:headers r) "Content-Type")))
-           (is (get (:headers r) "WWW-Authenticate"))
-           (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))))))}
+                                           :body "test area not accessable"})
+             r (f {:headers {}})]
+         (is (= 401 (:status r)))
+         (is (= "test area not accessable" (:body r)))
+         (is (= "test/mime" (get (:headers r) "Content-Type")))
+         (is (get (:headers r) "WWW-Authenticate"))
+         (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate"))))))}
 
   [app authenticate & [realm denied-response]]
   (fn [req]

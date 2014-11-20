@@ -79,76 +79,75 @@
 
   {:test
    (fn []
-     (do
-       (let [r ((wrap-basic-authentication identity
-                                           #(and (= %1 "tester")
-                                                 (= %2 "secret")
-                                                 "token"))
-                {:headers {"authorization"
-                           (str "Basic " (encode-base64 "tester:secret"))}})]
-         ;; authorization success
-         (is r)
+     (let [r ((wrap-basic-authentication identity
+                                         #(and (= %1 "tester")
+                                               (= %2 "secret")
+                                               "token"))
+              {:headers {"authorization"
+                         (str "Basic " (encode-base64 "tester:secret"))}})]
+       ;; authorization success
+       (is r)
 
-         ;; authorization success adds basic-authentication on request map
-         (is (= "token" (:basic-authentication r))))
+       ;; authorization success adds basic-authentication on request map
+       (is (= "token" (:basic-authentication r))))
 
-       ;; authorization should succeed when password contains a colon
-       (let [r ((wrap-basic-authentication identity
-                                           #(and (= %1 "tester")
-                                                 (= %2 "the:secret")
-                                                 "token"))
-                {:headers {"authorization"
-                           (str "Basic " (encode-base64 "tester:the:secret"))}})]
-         ;; authorization success
-         (is r)
+     ;; authorization should succeed when password contains a colon
+     (let [r ((wrap-basic-authentication identity
+                                         #(and (= %1 "tester")
+                                               (= %2 "the:secret")
+                                               "token"))
+              {:headers {"authorization"
+                         (str "Basic " (encode-base64 "tester:the:secret"))}})]
+       ;; authorization success
+       (is r)
 
-         ;; authorization success adds basic-authentication on request map
-         (is (= "token" (:basic-authentication r))))
+       ;; authorization success adds basic-authentication on request map
+       (is (= "token" (:basic-authentication r))))
 
-       ;; authorization success when expecting empty user and password
-       (is (= :pass
-              ((wrap-basic-authentication (fn [_] :pass) #(and (= %1 "")
-                                                               (= %2 "")))
-               {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})))
+     ;; authorization success when expecting empty user and password
+     (is (= :pass
+            ((wrap-basic-authentication (fn [_] :pass) #(and (= %1 "")
+                                                             (= %2 "")))
+             {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})))
 
-       ;; authorization failure with bad credentials
-       (let [f (wrap-basic-authentication identity (fn [_ _]))
-             r (f {:headers {}})]
-         (is (= 401 (:status r)))
-         (is (= "access denied" (:body r)))
-         (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate"))))
+     ;; authorization failure with bad credentials
+     (let [f (wrap-basic-authentication identity (fn [_ _]))
+           r (f {:headers {}})]
+       (is (= 401 (:status r)))
+       (is (= "access denied" (:body r)))
+       (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate"))))
 
-       ;; authorization failure with unacceptable
-       (let [r ((wrap-basic-authentication identity (fn [_ _]))
-                {:headers {"authorization" "Basic this is unacceptable!"}})]
-         (is (= 401 (:status r))))
+     ;; authorization failure with unacceptable
+     (let [r ((wrap-basic-authentication identity (fn [_ _]))
+              {:headers {"authorization" "Basic this is unacceptable!"}})]
+       (is (= 401 (:status r))))
 
-       ;; authorization failure with empty credentials
-       (let [r ((wrap-basic-authentication identity (fn [_ _]))
-                {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
-         (is (= 401 (:status r))))
+     ;; authorization failure with empty credentials
+     (let [r ((wrap-basic-authentication identity (fn [_ _]))
+              {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
+       (is (= 401 (:status r))))
 
-       ;; overwrite default status code
-       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})
-             r (f {:headers {}})]
-         (is (= 999 (:status r))))
+     ;; overwrite default status code
+     (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})
+           r (f {:headers {}})]
+       (is (= 999 (:status r))))
 
-       ;; overwrite default header
-       (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})
-             r (f {:headers {}})]
-         (is (= nil (get-in r [:headers "WWW-Authenticate"]))))
+     ;; overwrite default header
+     (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})
+           r (f {:headers {}})]
+       (is (= nil (get-in r [:headers "WWW-Authenticate"]))))
 
-       ;; fancy authorization failure
-       (let [f (wrap-basic-authentication identity (fn [_ _])
-                                          "test realm"
-                                          {:headers {"Content-Type" "test/mime"}
-                                           :body "test area not accessable"})
-             r (f {:headers {}})]
-         (is (= 401 (:status r)))
-         (is (= "test area not accessable" (:body r)))
-         (is (= "test/mime" (get (:headers r) "Content-Type")))
-         (is (get (:headers r) "WWW-Authenticate"))
-         (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate"))))))}
+     ;; fancy authorization failure
+     (let [f (wrap-basic-authentication identity (fn [_ _])
+                                        "test realm"
+                                        {:headers {"Content-Type" "test/mime"}
+                                         :body "test area not accessable"})
+           r (f {:headers {}})]
+       (is (= 401 (:status r)))
+       (is (= "test area not accessable" (:body r)))
+       (is (= "test/mime" (get (:headers r) "Content-Type")))
+       (is (get (:headers r) "WWW-Authenticate"))
+       (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))))}
 
   [app authenticate & [realm denied-response]]
   (fn [req]

@@ -9,27 +9,27 @@
 (ns ring.middleware.basic-authentication
   "HTTP basic authentication middleware for ring."
   {:author "Remco van 't Veer"}
-  (:use clojure.test)
   (:require [clojure.string :as s]
-            [clojure.data.codec.base64 :as base64]))
+            [clojure.test :refer [is]])
+  (:import java.util.Base64))
 
 (defn- byte-transform
   "Used to encode and decode strings.  Returns nil when an exception
   was raised."
   [direction-fn string]
   (try
-    (apply str (map char (direction-fn (.getBytes string))))
+    (s/join (map char (direction-fn (.getBytes string))))
     (catch Exception _)))
 
 (defn- encode-base64
   "Will do a base64 encoding of a string and return a string."
   [^String string]
-  (byte-transform base64/encode string))
+  (byte-transform #(.encode (Base64/getEncoder) %) string))
 
 (defn- decode-base64
   "Will do a base64 decoding of a string and return a string."
   [^String string]
-  (byte-transform base64/decode string))
+  (byte-transform #(.decode (Base64/getDecoder) %) string))
 
 (defn basic-authentication-request
   "Authenticates the given request against using auth-fn. The value

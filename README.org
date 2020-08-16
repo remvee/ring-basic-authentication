@@ -6,15 +6,15 @@
 ** Usage
 
    #+BEGIN_SRC clojure
-   (require '[ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
+     (require '[ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
 
-   (defn authenticated? [name pass]
-     (and (= name "foo")
-          (= pass "bar")))
+     (defn authenticated? [name pass]
+       (and (= name "foo")
+            (= pass "bar")))
 
-   (def app (-> routes
-                ..
-                (wrap-basic-authentication authenticated?))
+     (def app (-> routes
+                  ..
+                  (wrap-basic-authentication authenticated?))
    #+END_SRC
 
 ** Installation
@@ -23,7 +23,7 @@
    appropriate place:
 
    #+BEGIN_SRC clojure
-   [ring-basic-authentication "1.0.5"]
+     [ring-basic-authentication "1.1.0"]
    #+END_SRC
 
 

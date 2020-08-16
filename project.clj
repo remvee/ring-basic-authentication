@@ -1,4 +1,4 @@
-(defproject ring-basic-authentication "1.1.0-SNAPSHOT"
+(defproject ring-basic-authentication "1.1.0"
   :description "Ring middleware to enforce basic authentication as described in RFC2617 section 2."
   :url "https://github.com/remvee/ring-basic-authentication/"
 

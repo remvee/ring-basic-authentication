@@ -1,0 +1,12 @@
+# build.sr.ht
+
+image: debian/buster
+packages:
+  - openjdk-11-jdk-headless
+  - leiningen
+sources:
+  - https://git.sr.ht/~rwv/ring-basic-authentication
+tasks:
+  - test: |
+      cd ring-basic-authentication
+      lein test

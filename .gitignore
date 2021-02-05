@@ -2,7 +2,6 @@
 /ring-basic-authentication-*.jar
 /lib
 /classes
-/doc
 /.lein-deps-sum
 /.lein-failures
 /target

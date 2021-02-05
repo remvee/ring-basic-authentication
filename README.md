@@ -1,11 +1,11 @@
-* ring-basic-authentication
+# ring-basic-authentication
 
   Ring middleware to enforce basic authentication as described in
   RFC2617 section 2.
 
-** Usage
+## Usage
 
-   #+BEGIN_SRC clojure
+   ```
      (require '[ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
 
      (defn authenticated? [name pass]
@@ -15,19 +15,19 @@
      (def app (-> routes
                   ..
                   (wrap-basic-authentication authenticated?))
-   #+END_SRC
+   ```
 
-** Installation
+## Installation
 
-   Drop the following dependency in your =project.clj= at the
+   Drop the following dependency in your `project.clj` at the
    appropriate place:
 
-   #+BEGIN_SRC clojure
+   ```
      [ring-basic-authentication "1.1.0"]
-   #+END_SRC
+   ```
 
 
-** License
+## License
 
    Copyright (c) Remco van 't Veer. All rights reserved.
 

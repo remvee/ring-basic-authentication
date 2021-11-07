@@ -13,23 +13,25 @@
             [clojure.test :refer [is]])
   (:import java.util.Base64))
 
+(set! *warn-on-reflection* true)
+
 (defn- byte-transform
   "Used to encode and decode strings.  Returns nil when an exception
   was raised."
   [direction-fn string]
   (try
-    (s/join (map char (direction-fn (.getBytes string))))
+    (s/join (map char (direction-fn (.getBytes ^String string))))
     (catch Exception _)))
 
 (defn- encode-base64
   "Will do a base64 encoding of a string and return a string."
   [^String string]
-  (byte-transform #(.encode (Base64/getEncoder) %) string))
+  (byte-transform #(.encode (Base64/getEncoder) ^bytes %) string))
 
 (defn- decode-base64
   "Will do a base64 decoding of a string and return a string."
   [^String string]
-  (byte-transform #(.decode (Base64/getDecoder) %) string))
+  (byte-transform #(.decode (Base64/getDecoder) ^bytes %) string))
 
 (defn basic-authentication-request
   "Authenticates the given request against using auth-fn. The value

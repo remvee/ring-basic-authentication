@@ -10,4 +10,6 @@
 
   :codox {:output-path    "doc"
           :source-dir-uri ""
-          :source-uri     "https://github.com/remvee/ring-basic-authentication/blob/{git-commit}/{filepath}#L{line}"})
+          :source-uri     "https://github.com/remvee/ring-basic-authentication/blob/{git-commit}/{filepath}#L{line}"}
+
+  :global-vars {*warn-on-reflection* true})

@@ -49,7 +49,13 @@
   plain text \"access denied\" response.  :status and :body can be
   overriden via keys in denied-response, and :headers from
   denied-response are merged into those of the default response.
-  realm defaults to \"restricted area\" if not given."
+  realm defaults to \"restricted area\" if not given.
+
+  Note: this function not aware of what kind of request it is building
+  a response for and thus can not avoid sending no body on a HEAD
+  request.  The wrap-basic-authentication middleware will provide a
+  customized denied-response but if used outside that wrapper consider
+  setting :body to nil for HEAD requests."
   [& [realm denied-response]]
   (assoc (merge {:status 401
                  :body   "access denied"}
@@ -115,7 +121,9 @@
            r (f {:headers {}})]
        (is (= 401 (:status r)))
        (is (= "access denied" (:body r)))
-       (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate"))))
+       (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate")))
+       (let [r (f {:request-method :head, :headers {}})]
+         (is (nil? (:body r)) "head request yields no body")))
 
      ;; authorization failure with unacceptable
      (let [r ((wrap-basic-authentication identity (fn [_ _]))
@@ -147,11 +155,17 @@
        (is (= "test area not accessable" (:body r)))
        (is (= "test/mime" (get (:headers r) "Content-Type")))
        (is (get (:headers r) "WWW-Authenticate"))
-       (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))))}
+       (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))
+
+       (let [r (f {:request-method :head, :headers {}})]
+         (is (nil? (:body r)) "head request yields no body"))))}
 
   [app authenticate & [realm denied-response]]
-  (fn [req]
+  (fn [{:keys [request-method] :as req}]
     (let [auth-req (basic-authentication-request req authenticate)]
       (if (:basic-authentication auth-req)
         (app auth-req)
-        (authentication-failure realm denied-response)))))
+        (authentication-failure realm
+                                (into denied-response
+                                      (when (= request-method :head)
+                                        {:body nil})))))))

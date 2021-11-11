@@ -23,7 +23,7 @@
    appropriate place:
 
    ```
-     [ring-basic-authentication "1.1.0"]
+     [ring-basic-authentication "1.1.1"]
    ```
 
 

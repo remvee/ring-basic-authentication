@@ -9,8 +9,7 @@
 (ns ring.middleware.basic-authentication
   "HTTP basic authentication middleware for ring."
   {:author "Remco van 't Veer"}
-  (:require [clojure.string :as s]
-            [clojure.test :refer [is]])
+  (:require [clojure.string :as s])
   (:import java.util.Base64))
 
 (set! *warn-on-reflection* true)
@@ -84,84 +83,6 @@
   returned when authorization fails.  The appropriate status and
   authentication headers will be merged into it.  It defaults to plain
   text 'access denied' response."
-
-  {:test
-   (fn []
-     (let [r ((wrap-basic-authentication identity
-                                         #(and (= %1 "tester")
-                                               (= %2 "secret")
-                                               "token"))
-              {:headers {"authorization"
-                         (str "Basic " (encode-base64 "tester:secret"))}})]
-       ;; authorization success
-       (is r)
-
-       ;; authorization success adds basic-authentication on request map
-       (is (= "token" (:basic-authentication r))))
-
-     ;; authorization should succeed when password contains a colon
-     (let [r ((wrap-basic-authentication identity
-                                         #(and (= %1 "tester")
-                                               (= %2 "the:secret")
-                                               "token"))
-              {:headers {"authorization"
-                         (str "Basic " (encode-base64 "tester:the:secret"))}})]
-       ;; authorization success
-       (is r)
-
-       ;; authorization success adds basic-authentication on request map
-       (is (= "token" (:basic-authentication r))))
-
-     ;; authorization success when expecting empty user and password
-     (is (= :pass
-            ((wrap-basic-authentication (fn [_] :pass) #(and (= %1 "")
-                                                             (= %2 "")))
-             {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})))
-
-     ;; authorization failure with bad credentials
-     (let [f (wrap-basic-authentication identity (fn [_ _]))
-           r (f {:headers {}})]
-       (is (= 401 (:status r)))
-       (is (= "access denied" (:body r)))
-       (is (re-matches #".*\"restricted area\"" (get (:headers r) "WWW-Authenticate")))
-       (let [r (f {:request-method :head, :headers {}})]
-         (is (nil? (:body r)) "head request yields no body")))
-
-     ;; authorization failure with unacceptable
-     (let [r ((wrap-basic-authentication identity (fn [_ _]))
-              {:headers {"authorization" "Basic this is unacceptable!"}})]
-       (is (= 401 (:status r))))
-
-     ;; authorization failure with empty credentials
-     (let [r ((wrap-basic-authentication identity (fn [_ _]))
-              {:headers {"authorization" (str "Basic " (encode-base64 ":"))}})]
-       (is (= 401 (:status r))))
-
-     ;; overwrite default status code
-     (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:status 999})
-           r (f {:headers {}})]
-       (is (= 999 (:status r))))
-
-     ;; overwrite default header
-     (let [f (wrap-basic-authentication identity (fn [_ _]) nil {:headers {"WWW-Authenticate" nil}})
-           r (f {:headers {}})]
-       (is (= nil (get-in r [:headers "WWW-Authenticate"]))))
-
-     ;; fancy authorization failure
-     (let [f (wrap-basic-authentication identity (fn [_ _])
-                                        "test realm"
-                                        {:headers {"Content-Type" "test/mime"}
-                                         :body "test area not accessable"})
-           r (f {:headers {}})]
-       (is (= 401 (:status r)))
-       (is (= "test area not accessable" (:body r)))
-       (is (= "test/mime" (get (:headers r) "Content-Type")))
-       (is (get (:headers r) "WWW-Authenticate"))
-       (is (re-matches #".*\"test realm\"" (get (:headers r) "WWW-Authenticate")))
-
-       (let [r (f {:request-method :head, :headers {}})]
-         (is (nil? (:body r)) "head request yields no body"))))}
-
   [app authenticate & [realm denied-response]]
   (fn [{:keys [request-method] :as req}]
     (let [auth-req (basic-authentication-request req authenticate)]

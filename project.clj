@@ -5,4 +5,4 @@
   :license {:name "Eclipse Public License - v 1.0"
             :url  "http://opensource.org/licenses/eclipse-1.0.php"}
 
-  :dependencies [[org.clojure/clojure "1.10.3"]])
+  :profiles {:dev {:dependencies [[org.clojure/clojure "1.11.1"]]}})

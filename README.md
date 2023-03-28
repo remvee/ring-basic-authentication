@@ -24,7 +24,7 @@ Drop the following dependency in your `project.clj` at the appropriate
 place:
 
 ```
-[ring-basic-authentication "1.1.1"]
+[ring-basic-authentication "1.2.0"]
 ```
 
 ## Contribute
